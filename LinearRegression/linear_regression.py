@@ -1,9 +1,17 @@
 # implementing the linear regression
 # algorithm from scratch in python
 import random
+import numpy as np
 
 class LinearRegression1V():
+    """
+    This class is for Single Variable Linear Regression
+    """
     def __init__(self, lr=0.1):
+        """
+        Initialize the class with hyper-parameters
+        """
+        self.cost_history = []
         self.w = 0
         self.b = 0
         self.lr = lr
@@ -12,8 +20,9 @@ class LinearRegression1V():
         return weight * X + bias
     
     def gradient_descent(self, X, y):
-        # w_d = 0
-        # b_d = 0
+        """
+        Update the gradient/weights
+        """
         N = len(X)
         for i in range(N):
             self.w -= (self.lr * 2 * (self.prediction(X[i], self.w, self.b) - y[i]) * X[i]) / N
@@ -30,11 +39,16 @@ class LinearRegression1V():
         return cost / N
 
     def fit(self, X, y, epochs=5):
-        cost_hist = []
+        """
+        Function to train the model
+        Inputs:
+            X: Input set of features
+            y: Set of labels/outputs
+        """
         for i in range(epochs):
             weight, bias = self.gradient_descent(X, y)
             cost = self.cost_function(X, y, weight, bias)
-            cost_hist.append(cost)
+            self.cost_history.append(cost)
 
             # Log loop
             print("Iter {0}/{1}  weight={2:.3f}   bias={3:.4f}  cost={4:.4f}".format(
@@ -44,6 +58,11 @@ class LinearRegression1V():
         return weight, bias
     
     def predict(self, X):
+        """
+        Function to predict the output of the value
+        Input:
+            X: Array of features to predict
+        """
         pred = []
         for i in range(len(X)):
             pred.append(round((self.w * X[i]) + self.b, 2))
@@ -51,9 +70,84 @@ class LinearRegression1V():
         return pred
     
     def score(self, y, y_pred):
+        """
+        Returns the score of the model
+        """
         N = len(y)
         diff = []
         for i in range(N):
             diff.append(abs(y[i] - y_pred[i]))
         
         print("Accuracy: {:.2f}".format(1.0 - sum(diff) / N))
+
+
+class MVLinearRegression():
+    """
+    This class is for multivariate linear regression
+    """
+    def __init__(self, lr=0.1):
+        self.lr = lr
+        self.weights = []
+        self.cost_history = []
+    
+    def prediction(self, X, weight):
+        return np.dot(X, weight)
+    
+    def cost_function(self, X, y, weight):
+        N = len(y)
+        predictions = self.prediction(X, weight)
+        error = (predictions - y) ** 2
+
+        return (1.0 * error.sum()) / (2 * N)
+    
+    def gradient_descent(self, X, y, weight):
+        predictions = self.prediction(X, weight)
+
+        error = y - predictions
+        gradient = np.dot(-X.T, error)
+        gradient /= len(y)
+        gradient *= self.lr
+
+        weight -= gradient
+        return weight
+    
+    def preprocess_data(self, X):
+        # normalize the input variable
+        fmean = X.mean()
+        frange = np.amax(X) - np.amin(X)
+
+        normalized = (X - fmean) / frange
+        bias = np.ones((len(X), 1))
+        X = np.append(bias, normalized, axis=1)
+
+        return X
+    
+    def fit(self, X, y, epochs=5):
+        """
+        Function to train the model
+        Input:
+            X: Input features [Array]
+            y: Label/Output    [Array]
+            epochs: No. of iterations to run the training   [Int]
+        """
+        weight = np.zeros((len(y)+1, 1))
+        for i in range(epochs):
+            weight = self.gradient_descent(X, y, weight)
+            cost = self.cost_function(X, y, weight)
+            self.cost_history.append(cost)
+
+            # Log loop
+            print("Iter {0}/{1} cost={2:.4f}".format(
+                i+1, epochs, cost
+            ))
+        self.weights = weight
+        return self.weights
+    
+    def predict(self, X):
+        """
+        Weights and Input Variable are transposed
+        to match matrix multiplication shape
+        Inputs:
+            X: Array to be predicted
+        """
+        return np.dot(self.weights.T, X.T)
