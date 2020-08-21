@@ -96,18 +96,21 @@ class MVLinearRegression():
     def cost_function(self, X, y, weight):
         N = len(y)
         predictions = self.prediction(X, weight)
-        error = (predictions - y) ** 2
+        # print("COST FN -> pred {}  y {}".format(predictions.shape, y.shape))
+        error = np.square(predictions - y)
 
         return (1.0 * error.sum()) / (2 * N)
     
     def gradient_descent(self, X, y, weight):
         predictions = self.prediction(X, weight)
-
+        # print("In gred pred shape {} and weight shape {}".format(predictions.shape, weight.shape))
         error = y - predictions
+        # print("y shape: {} error shape: {}".format(y.shape, error.shape))
+        # print("X shape: {} error shape: {}".format(X.shape, error.shape))
         gradient = np.dot(-X.T, error)
         gradient /= len(y)
         gradient *= self.lr
-
+        # print("Gradient Shape {}".format(gradient.shape))
         weight -= gradient
         return weight
     
@@ -130,7 +133,10 @@ class MVLinearRegression():
             y: Label/Output    [Array]
             epochs: No. of iterations to run the training   [Int]
         """
-        weight = np.zeros((len(y)+1, 1))
+        # print("FIT Y SHAPE: {}".format(y.shape))
+        # print(X.shape)
+        weight = np.zeros((X.shape[1], 1))
+        # print(weight.shape)
         for i in range(epochs):
             weight = self.gradient_descent(X, y, weight)
             cost = self.cost_function(X, y, weight)
